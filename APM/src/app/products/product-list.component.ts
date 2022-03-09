@@ -1,4 +1,5 @@
-import { Component, Injectable, OnInit } from "@angular/core";
+import { Component, Injectable, OnDestroy, OnInit } from "@angular/core";
+import { Subscription } from "rxjs";
 import { IProduct } from "./product";
 import { ProductService } from "./product.service";
 
@@ -8,15 +9,18 @@ import { ProductService } from "./product.service";
     styleUrls : ['./product-list.component.css']
 
 })
-export class ProductListComponent implements OnInit {
+export class ProductListComponent implements OnInit,OnDestroy {
     constructor(private productService: ProductService){
     }
 
+
     pageTitle: string = "Products list";
+    errorMessage: string= '';
     imageWidth: number = 50; 
     imageMargin: number = 2 ; 
     showImage: boolean = false;
     private _listFilter: string ="" ;
+    sub!: Subscription; 
     get listFilter(): string {
       return this._listFilter; 
     } 
@@ -34,8 +38,16 @@ export class ProductListComponent implements OnInit {
         this.showImage = !this.showImage;
       }
       ngOnInit(): void {
-        this.products = this.productService.getProducts();
-        this.filteredProducts= this.products ; 
+          this.productService.getProducts().subscribe({
+          next: products => {
+            this.products = products
+            this.filteredProducts= this.products ; 
+          },
+          error: err => this.errorMessage = err
+        });
+      }
+      ngOnDestroy(): void {
+        this.sub.unsubscribe(); 
       }
       onRatingClicked(message: string): void {
         this.pageTitle = 'Product list '+message;
